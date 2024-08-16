@@ -69,7 +69,7 @@ const AdharUI = () => {
           otpValue={otp} // Pass OTP value to autofill
         />
       )}
-      {showAadhaarInfo && <AadhaarInfoCard />}
+      {showAadhaarInfo && <AadhaarInfoCard aadhaarNumber={aadhaarNumber} />}
     </div>
   );
 };
