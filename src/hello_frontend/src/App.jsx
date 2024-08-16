@@ -1,31 +1,37 @@
-import { useState } from 'react';
-import { hello_backend } from 'declarations/hello_backend';
+// import React, { useState, useEffect } from 'react';
 
-function App() {
-  const [greeting, setGreeting] = useState('');
+function Adhar() {
+  
+  // JavaScript code for generating auth token
+  const url = 'https://api.sandbox.co.in/authenticate';
+  
+  const headers = {
+    'accept': 'application/json',
+    'x-api-key': 'key_Live_xQp3KX7ZJLYSs9hij7vZ8xu9g5rvc1',
+    'x-api-secret': 'secret_Live_MfshrIYD9quRCokmUgyxdPEGGThNWqtM',
+    'x-api-version': '1.0'
+  };
+  
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    const name = event.target.elements.name.value;
-    hello_backend.greet(name).then((greeting) => {
-      setGreeting(greeting);
+  
+  // Fetch request for generating the auth token
+  fetch(url, {
+    method: 'POST',
+    headers: headers
+  })
+    .then(response => response.json())
+    .then(data => {
+      console.log(data); // The result from the API
+    })
+    .catch(error => {
+      console.error('Error:', error);
     });
-    return false;
+  
+  // Handling the request for Aadhar number
+  if (new URLSearchParams(window.location.search).has('sendotp')) {
+    const aadharno = new URLSearchParams(new FormData(document.querySelector('form'))).get('aadhar_no');
+    console.log('Aadhar Number:', aadharno);
   }
-
-  return (
-    <main>
-      <img src="/logo2.svg" alt="DFINITY logo" />
-      <br />
-      <br />
-      <form action="#" onSubmit={handleSubmit}>
-        <label htmlFor="name">Enter your name: &nbsp;</label>
-        <input id="name" alt="Name" type="text" />
-        <button type="submit">Click Me!</button>
-      </form>
-      <section id="greeting">{greeting}</section>
-    </main>
-  );
-}
-
-export default App;
+  }
+  
+  export default Adhar;
