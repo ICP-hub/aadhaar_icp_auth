@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AadhaarInputCard from './AadharUI';
 import OtpInputCard from './otp';
 import AadhaarInfoCard from './info';
@@ -8,6 +8,8 @@ const AdharUI = () => {
   const [showOtpCard, setShowOtpCard] = useState(false);
   const [showAadhaarInfo, setShowAadhaarInfo] = useState(false);
   const [otp, setOtp] = useState('');
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
+  const hardcodedOtp = '123456'; // Hardcoded OTP for example
 
   const handleAadhaarChange = (e) => {
     setAadhaarNumber(e.target.value);
@@ -22,16 +24,27 @@ const AdharUI = () => {
     return aadhaarPattern.test(aadhaarNumber);
   };
 
-  const handleOtpRequest = () => {
+  const handleOtpRequest = async () => {
     if (validateAadhaar()) {
-      setShowOtpCard(true); // Display OTP input card
+      setIsOtpLoading(true); // Start loading
+
+      // Simulate OTP sending delay
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate a 2-second delay
+
+      // Simulate OTP being sent
+      alert( hardcodedOtp); // Log OTP to console
+
+      setShowOtpCard(true); // Show OTP input card
+      setIsOtpLoading(false); // Stop loading
+
+      // Autofill the OTP after sending
+      setOtp(hardcodedOtp);
     } else {
       alert('Please enter a valid 12-digit Aadhaar number.');
     }
   };
 
   const handleVerifyOtp = () => {
-    const hardcodedOtp = '123456'; // Hardcoded OTP for example
     if (otp === hardcodedOtp) {
       setShowOtpCard(false);
       setShowAadhaarInfo(true);
@@ -46,12 +59,14 @@ const AdharUI = () => {
         <AadhaarInputCard
           handleAadhaarChange={handleAadhaarChange}
           handleOtpRequest={handleOtpRequest}
+          isOtpLoading={isOtpLoading} // Pass loading state
         />
       )}
       {showOtpCard && (
         <OtpInputCard
           handleOtpChange={handleOtpChange}
           handleVerifyOtp={handleVerifyOtp}
+          otpValue={otp} // Pass OTP value to autofill
         />
       )}
       {showAadhaarInfo && <AadhaarInfoCard />}

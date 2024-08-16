@@ -1,6 +1,6 @@
 import React from 'react';
 
-const OtpInputCard = ({ handleOtpChange, handleVerifyOtp }) => {
+const OtpInputCard = ({ handleOtpChange, handleVerifyOtp , otpValue }) => {
   return (
     <>
       <meta charSet="UTF-8" />
@@ -49,6 +49,8 @@ const OtpInputCard = ({ handleOtpChange, handleVerifyOtp }) => {
                 aria-label="Otp"
                 aria-describedby="basic-addon1"
                 onChange={handleOtpChange}
+                 autoComplete="one-time-code"
+                 value={otpValue} // Autofill OTP
               />
             </div>
             <button className="btn btn-primary w-100 mt-3" onClick={handleVerifyOtp}>

@@ -5,7 +5,9 @@ const AadhaarInputCard = ({ handleAadhaarChange, handleOtpRequest }) => {
 
   const handleSendOtpClick = async () => {
     setIsOtpLoading(true);
-    await handleOtpRequest();
+    // Simulate OTP sending delay
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate a 2-second delay
+    await handleOtpRequest(); // Call the OTP request handler
     setIsOtpLoading(false);
   };
 
@@ -35,7 +37,7 @@ const AadhaarInputCard = ({ handleAadhaarChange, handleOtpRequest }) => {
               height={24}
               className="d-inline-block align-text-top fw-bold"
             />
-            Aadhar Verify API
+            Aadhaar Verify API
           </a>
         </div>
       </nav>
