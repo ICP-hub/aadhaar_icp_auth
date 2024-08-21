@@ -3,10 +3,13 @@ import AadhaarInputCard from './AadharUI';
 import OtpInputCard from './otp';
 import AadhaarInfoCard from './info';
 
+import KeyPairComponent from './refid';
+
 const AdharUI = () => {
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [showOtpCard, setShowOtpCard] = useState(false);
   const [showAadhaarInfo, setShowAadhaarInfo] = useState(false);
+  const [showRefId, setShowRefId] = useState(false);
   const [otp, setOtp] = useState('');
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const hardcodedOtp = '123456'; // Hardcoded OTP for example
@@ -48,14 +51,20 @@ const AdharUI = () => {
     if (otp === hardcodedOtp) {
       setShowOtpCard(false);
       setShowAadhaarInfo(true);
+
+      // Delay showing the RefIdComponent (optional)
+      setTimeout(() => {
+        setShowRefId(true); // Show RefIdComponent after a delay or immediately
+      }, 2000); // Adjust the delay as needed
     } else {
       alert('Invalid OTP. Please try again.');
     }
   };
 
+
   return (
     <div className="container">
-      {!showOtpCard && !showAadhaarInfo && (
+      {!showOtpCard && !showAadhaarInfo && !showRefId && (
         <AadhaarInputCard
           handleAadhaarChange={handleAadhaarChange}
           handleOtpRequest={handleOtpRequest}
@@ -70,6 +79,7 @@ const AdharUI = () => {
         />
       )}
       {showAadhaarInfo && <AadhaarInfoCard aadhaarNumber={aadhaarNumber} />}
+      {showRefId && <KeyPairComponent />} {/* Render RefIdComponent */}
     </div>
   );
 };

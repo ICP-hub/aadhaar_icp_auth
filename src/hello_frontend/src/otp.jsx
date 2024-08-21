@@ -36,7 +36,7 @@ const OtpInputCard = ({ handleOtpChange, handleVerifyOtp , otpValue }) => {
         <div className="card col-md-5 mx-auto my-3 shadow-sm">
           <div className="card-body">
             <h5 className="my-3 text-center">
-              Enter OTP sent to your registered mobile no
+              Enter OTP sent to your registered mobile number
             </h5>
             <div className="input-group">
               <span className="input-group-text" id="basic-addon1">
