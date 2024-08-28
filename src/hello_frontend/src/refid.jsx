@@ -1,96 +1,94 @@
 import React, { useEffect, useState } from 'react';
-import nacl from 'tweetnacl';
-import { Principal } from '@dfinity/principal';
 import { Ed25519KeyIdentity } from '@dfinity/identity';
+import { Actor, HttpAgent } from '@dfinity/agent';
+import { idlFactory as backend_idl, canisterId as backend_id } from '../../declarations/hello_backend'; // Adjust the path as needed
+
 const RefIdComponent = () => {
-    const [publicKey, setPublicKey] = useState('');
-    const [privateKeyStr, setPrivateKeyStr] = useState('');
-    const [principalId, setPrincipalId] = useState('');
-    const [publicKeyBigInt, setPublicKeyBigInt] = useState('');
-    const refId = '123456'; // Hardcoded refId
+  const [publicKey, setPublicKey] = useState([]);
+  const [privateKey, setPrivateKey] = useState([]);
+  const [principalId, setPrincipalId] = useState('');
+  const [responseMessage, setResponseMessage] = useState('');
+  const refId = '12556'; // Hardcoded refId
 
-    useEffect(() => {
-        const generateKeyPairAndPrincipal = () => {
-            // Use the refId as a seed for generating the key pair
-            const seed = new TextEncoder().encode(refId.padEnd(32, '0')).slice(0, 32); // Ensure 32 bytes for seed
-           console.log(seed);
-          
-            // Generate identity using the Ed25519 algorithm
-            
-            const identity = Ed25519KeyIdentity.generate(seed);
-            
-            const privateKey = identity.getKeyPair().secretKey;
-            const publicKey = identity.getPublicKey();
-            // Encrypt the private key using AES-256-CBC
-            //const encryptionKey = crypto.randomBytes(32); // AES key size: 256 bits (32 bytes)
-            // const keyPair = nacl.sign.keyPair.fromSeed(seed);
-            // const privateKey = keyPair.secretKey;
-            // const publicKey = keyPair.publicKey;
+  useEffect(() => {
+    const generateIdentityAndAuthenticate = async () => {
+      try {
+        // Generate the identity
+        const seed = new TextEncoder().encode(refId.padEnd(32, '0')).slice(0, 32);
+        const identity = Ed25519KeyIdentity.generate(seed);
+        const principal = identity.getPrincipal();
 
-            // // Convert the keys to hex strings for easier viewing
-            // const privateKeyHex = Uint8ArrayToHex(privateKey);
-            // const publicKeyHex = Uint8ArrayToHex(publicKey);
+        // Get the public and private keys
+        const publicKey = identity.getPublicKey().toDer();
+        const privateKey = identity.getKeyPair().secretKey;
 
-            // // Convert the public key to a BigInt
-            // const publicKeyBigInt = Uint8ArrayToBigInt(publicKey);
+        // Convert keys to arrays for display and storage
+        const publicKeyArray = Array.from(publicKey);
+        const privateKeyArray = Array.from(privateKey);
 
-            // // Convert private key to base64 string
-            // const privateKeyStr = Uint8ArrayToBase64(privateKey);
+        // Store the identity details in localStorage
+        localStorage.setItem('identity', JSON.stringify({
+          principalId: principal.toText(),
+          publicKey: publicKeyArray,
+          privateKey: privateKeyArray,
+        }));
 
-            // // Set the keys and publicKeyBigInt in the state
-            // setPrivateKeyStr(privateKeyStr);
-            // setPublicKey(publicKeyHex);
-            // setPublicKeyBigInt(publicKeyBigInt.toString());
+        // Update state
+        setPublicKey(publicKeyArray);
+        setPrivateKey(privateKeyArray);
+        setPrincipalId(principal.toText());
 
-            // // Generate the Principal ID from the public key
-            // const principalId = Principal.selfAuthenticating(publicKey).toText();
-            // setPrincipalId(principalId);
-
-            // Log the keys and principal ID to the console
-            // console.log('Private Key (Base64):', privateKeyStr);
-             console.log('Public Key ', publicKey.toDer());
-             console.log('Public Key ', privateKey);
-             console.log('identity Key ', identity.getPrincipal().toString());
-            // console.log('Public Key (BigInt):', publicKeyBigInt.toString());
-            // console.log('Principal ID:', principalId);
-        };
-
-        generateKeyPairAndPrincipal();
-    }, [refId]);
-
-    const Uint8ArrayToHex = (uint8Array) => {
-        return Array.from(uint8Array)
-            .map((byte) => byte.toString(16).padStart(2, '0'))
-            .join('');
+        // Authenticate and call the backend canister
+        await authenticateAndCallBackend(identity);
+      } catch (error) {
+        console.error('Error generating identity or authenticating:', error);
+        setResponseMessage(`Error: ${error.message}`);
+      }
     };
 
-    const Uint8ArrayToBigInt = (uint8Array) => {
-        let bigIntValue = BigInt(0);
-        for (let i = 0; i < uint8Array.length; i++) {
-            bigIntValue = (bigIntValue << BigInt(8)) | BigInt(uint8Array[i]);
+    const authenticateAndCallBackend = async (identity) => {
+      try {
+        const agent = new HttpAgent({ identity });
+
+        // For local development, you might need to fetch the root key
+        if (process.env.NODE_ENV === 'development') {
+          await agent.fetchRootKey();
         }
-        return bigIntValue;
+
+        // Create an actor to interact with the backend canister
+        const backendActor = Actor.createActor(backend_idl, {
+          agent,
+          canisterId: backend_id,
+        });
+
+        // Call the greet function from the backend canister
+        const response = await backendActor.greet(); // Call greet function
+        console.log('Greet response:', response);
+
+        // Set the response (principal) to the state
+        setResponseMessage(`Authenticated call successful: ${response}`);
+      } catch (error) {
+        console.error('Error calling greet function:', error);
+        setResponseMessage(`Error calling greet function: ${error.message}`);
+      }
     };
 
-    const Uint8ArrayToBase64 = (uint8Array) => {
-        // Convert Uint8Array to base64 string
-        const binaryString = Array.from(uint8Array)
-            .map(byte => String.fromCharCode(byte))
-            .join('');
-        return window.btoa(binaryString);
-    };
+    generateIdentityAndAuthenticate();
+  }, [refId]);
 
-    return (
-        <div>
-            <h1>Key Pair and Principal ID Generator</h1>
-            <p>Public Key (Hex): {publicKey}</p>
-            <p>Private Key (Base64): {privateKeyStr}</p>
-            <p>Principal ID: {principalId}</p>
-            <p>Public Key (BigInt): {publicKeyBigInt}</p>
-            <p>Check the console for the details.</p>
-            {/* In a real scenario, you should not display the private key publicly. */}
-        </div>
-    );
+  const Uint8ArrayToCommaSeparated = (uint8Array) => {
+    return uint8Array.join(', ');
+  };
+
+  return (
+    <div>
+      <h1>Identity and Authentication</h1>
+      <p>Public Key (Uint8Array): {Uint8ArrayToCommaSeparated(publicKey)}</p>
+      <p>Private Key (Uint8Array): {Uint8ArrayToCommaSeparated(privateKey)}</p>
+      <p>Principal ID: {principalId}</p>
+      <p>Response from backend canister: {responseMessage}</p>
+    </div>
+  );
 };
 
 export default RefIdComponent;

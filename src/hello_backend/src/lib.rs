@@ -1,4 +1,7 @@
-#[ic_cdk::query]
-fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
+use candid::{CandidType, Principal};
+use ic_cdk::query;
+
+#[query]
+fn greet() -> Principal {
+    ic_cdk::caller()
 }

@@ -3,13 +3,15 @@ import AadhaarInputCard from './AadharUI';
 import OtpInputCard from './otp';
 import AadhaarInfoCard from './info';
 
-import KeyPairComponent from './refid';
+import PrincipalVerificationComponent from './principal'; // Import the PrincipalVerificationComponent
+import RefIdComponent from './refid';
 
 const AdharUI = () => {
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [showOtpCard, setShowOtpCard] = useState(false);
   const [showAadhaarInfo, setShowAadhaarInfo] = useState(false);
   const [showRefId, setShowRefId] = useState(false);
+  const [showPrincipalVerification, setShowPrincipalVerification] = useState(false); // State to control rendering of PrincipalVerificationComponent
   const [otp, setOtp] = useState('');
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const hardcodedOtp = '123456'; // Hardcoded OTP for example
@@ -35,7 +37,7 @@ const AdharUI = () => {
       await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate a 2-second delay
 
       // Simulate OTP being sent
-      alert( hardcodedOtp); // Log OTP to console
+      alert(hardcodedOtp); // Log OTP to console
 
       setShowOtpCard(true); // Show OTP input card
       setIsOtpLoading(false); // Stop loading
@@ -55,12 +57,16 @@ const AdharUI = () => {
       // Delay showing the RefIdComponent (optional)
       setTimeout(() => {
         setShowRefId(true); // Show RefIdComponent after a delay or immediately
+
+        // Further delay to show PrincipalVerificationComponent
+        setTimeout(() => {
+          setShowPrincipalVerification(true); // Show PrincipalVerificationComponent
+        }, 2000); // Adjust the delay as needed
       }, 2000); // Adjust the delay as needed
     } else {
       alert('Invalid OTP. Please try again.');
     }
   };
-
 
   return (
     <div className="container">
@@ -79,7 +85,8 @@ const AdharUI = () => {
         />
       )}
       {showAadhaarInfo && <AadhaarInfoCard aadhaarNumber={aadhaarNumber} />}
-      {showRefId && <KeyPairComponent />} {/* Render RefIdComponent */}
+      {showRefId && <RefIdComponent />} {/* Render RefIdComponent */}
+      {showPrincipalVerification && <PrincipalVerificationComponent />} {/* Render PrincipalVerificationComponent */}
     </div>
   );
 };
