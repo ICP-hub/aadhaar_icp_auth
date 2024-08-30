@@ -85,7 +85,7 @@ const AdharUI = () => {
         />
       )}
       {showAadhaarInfo && <AadhaarInfoCard aadhaarNumber={aadhaarNumber} />}
-      {showRefId && <RefIdComponent />} {/* Render RefIdComponent */}
+      {showRefId && <RefIdComponent aadhaarNumber={aadhaarNumber}/>} {/* Render RefIdComponent */}
       {showPrincipalVerification && <PrincipalVerificationComponent />} {/* Render PrincipalVerificationComponent */}
     </div>
   );

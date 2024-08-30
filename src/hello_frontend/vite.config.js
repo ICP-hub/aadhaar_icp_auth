@@ -14,7 +14,7 @@ export default defineConfig({
       // Externalize specific modules if needed
       external: [
         'crypto-browserify',
-        '@dfinity/agent'
+        // '@dfinity/agent'
       ]
     }
   },

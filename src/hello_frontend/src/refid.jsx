@@ -1,41 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import { Ed25519KeyIdentity } from '@dfinity/identity';
-import { Actor, HttpAgent } from '@dfinity/agent';
+import { HttpAgent, Actor } from "@dfinity/agent";
 import { idlFactory as backend_idl, canisterId as backend_id } from '../../declarations/hello_backend'; // Adjust the path as needed
 
-const RefIdComponent = () => {
+const RefIdComponent = ({ aadhaarNumber }) => {
   const [publicKey, setPublicKey] = useState([]);
-  const [privateKey, setPrivateKey] = useState([]);
   const [principalId, setPrincipalId] = useState('');
   const [responseMessage, setResponseMessage] = useState('');
-  const refId = '12556'; // Hardcoded refId
+  const [encryptedSeed, setEncryptedSeed] = useState('');
+
+  // Hardcoded mobile number
+  const mobileNumber = '1234567890';
 
   useEffect(() => {
     const generateIdentityAndAuthenticate = async () => {
       try {
-        // Generate the identity
-        const seed = new TextEncoder().encode(refId.padEnd(32, '0')).slice(0, 32);
-        const identity = Ed25519KeyIdentity.generate(seed);
+        // Step 1: Combine Aadhaar number and hardcoded mobile number to create a secure and consistent seed
+        const encoder = new TextEncoder();
+        const combinedString = `${aadhaarNumber}-${mobileNumber}`;
+        const combinedBuffer = encoder.encode(combinedString);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', combinedBuffer);
+
+        // Convert the hash to a Uint8Array and ensure it's 32 bytes
+        let seed = new Uint8Array(hashBuffer);
+        if (seed.length > 32) {
+          seed = seed.slice(0, 32);
+        } else if (seed.length < 32) {
+          const padding = new Uint8Array(32 - seed.length);
+          seed = new Uint8Array([...seed, ...padding]);
+        }
+
+        // Step 2: Encrypt the seed using the Web Crypto API
+        const encryptedSeed = await encryptSeed(seed);
+        setEncryptedSeed(encryptedSeed);
+
+        // Step 3: Decrypt the seed to use it for generating the identity
+        const decryptedSeed = await decryptSeed(encryptedSeed);
+
+        // Step 4: Generate the identity using the decrypted seed
+        const identity = Ed25519KeyIdentity.generate(decryptedSeed);
         const principal = identity.getPrincipal();
 
-        // Get the public and private keys
+        // Get the public key
         const publicKey = identity.getPublicKey().toDer();
-        const privateKey = identity.getKeyPair().secretKey;
-
-        // Convert keys to arrays for display and storage
         const publicKeyArray = Array.from(publicKey);
-        const privateKeyArray = Array.from(privateKey);
 
-        // Store the identity details in localStorage
+        // Store identity details securely, avoid storing sensitive data like unencrypted seed
         localStorage.setItem('identity', JSON.stringify({
           principalId: principal.toText(),
           publicKey: publicKeyArray,
-          privateKey: privateKeyArray,
+          encryptedSeed, // Store encrypted seed, not decrypted
         }));
 
         // Update state
         setPublicKey(publicKeyArray);
-        setPrivateKey(privateKeyArray);
         setPrincipalId(principal.toText());
 
         // Authenticate and call the backend canister
@@ -44,6 +62,62 @@ const RefIdComponent = () => {
         console.error('Error generating identity or authenticating:', error);
         setResponseMessage(`Error: ${error.message}`);
       }
+    };
+
+    const encryptSeed = async (seed) => {
+      // Generate a key for AES-GCM encryption
+      const key = await window.crypto.subtle.generateKey(
+        {
+          name: "AES-GCM",
+          length: 256,
+        },
+        true,
+        ["encrypt", "decrypt"]
+      );
+
+      const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Initialization vector
+      const encryptedSeed = await window.crypto.subtle.encrypt(
+        {
+          name: "AES-GCM",
+          iv,
+        },
+        key,
+        seed
+      );
+
+      return {
+        key: await window.crypto.subtle.exportKey('jwk', key),
+        iv: Array.from(iv),
+        data: Array.from(new Uint8Array(encryptedSeed)),
+      };
+    };
+
+    const decryptSeed = async (encryptedSeed) => {
+      // Import the encryption key
+      const key = await window.crypto.subtle.importKey(
+        'jwk',
+        encryptedSeed.key,
+        {
+          name: "AES-GCM",
+          length: 256,
+        },
+        true,
+        ["decrypt"]
+      );
+
+      const iv = new Uint8Array(encryptedSeed.iv); // Initialization vector
+
+      // Decrypt the seed
+      const decryptedSeed = await window.crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv,
+        },
+        key,
+        new Uint8Array(encryptedSeed.data)
+      );
+
+      return new Uint8Array(decryptedSeed);
     };
 
     const authenticateAndCallBackend = async (identity) => {
@@ -74,7 +148,7 @@ const RefIdComponent = () => {
     };
 
     generateIdentityAndAuthenticate();
-  }, [refId]);
+  }, [aadhaarNumber]);
 
   const Uint8ArrayToCommaSeparated = (uint8Array) => {
     return uint8Array.join(', ');
@@ -84,7 +158,6 @@ const RefIdComponent = () => {
     <div>
       <h1>Identity and Authentication</h1>
       <p>Public Key (Uint8Array): {Uint8ArrayToCommaSeparated(publicKey)}</p>
-      <p>Private Key (Uint8Array): {Uint8ArrayToCommaSeparated(privateKey)}</p>
       <p>Principal ID: {principalId}</p>
       <p>Response from backend canister: {responseMessage}</p>
     </div>
