@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import AadhaarInputCard from './AadharUI';
 import OtpInputCard from './otp';
 import AadhaarInfoCard from './info';
-
-import PrincipalVerificationComponent from './principal'; // Import the PrincipalVerificationComponent
-import RefIdComponent from './refid';
+import Verification from './Verification';
 
 const AdharUI = () => {
   const [aadhaarNumber, setAadhaarNumber] = useState('');
   const [showOtpCard, setShowOtpCard] = useState(false);
   const [showAadhaarInfo, setShowAadhaarInfo] = useState(false);
-  const [showRefId, setShowRefId] = useState(false);
-  const [showPrincipalVerification, setShowPrincipalVerification] = useState(false); // State to control rendering of PrincipalVerificationComponent
+  const [showVerify, setShowVerify] = useState(false);
   const [otp, setOtp] = useState('');
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const hardcodedOtp = '123456'; // Hardcoded OTP for example
@@ -54,15 +51,11 @@ const AdharUI = () => {
       setShowOtpCard(false);
       setShowAadhaarInfo(true);
 
-      // Delay showing the RefIdComponent (optional)
+      // Delay showing the Verification (optional)
       setTimeout(() => {
-        setShowRefId(true); // Show RefIdComponent after a delay or immediately
-
-        // Further delay to show PrincipalVerificationComponent
-        setTimeout(() => {
-          setShowPrincipalVerification(true); // Show PrincipalVerificationComponent
-        }, 2000); // Adjust the delay as needed
-      }, 2000); // Adjust the delay as needed
+        setShowVerify(true); // Show Verification after a delay or immediately
+         
+      }, 2000); 
     } else {
       alert('Invalid OTP. Please try again.');
     }
@@ -70,7 +63,7 @@ const AdharUI = () => {
 
   return (
     <div className="container">
-      {!showOtpCard && !showAadhaarInfo && !showRefId && (
+      {!showOtpCard && !showAadhaarInfo && !showVerify && (
         <AadhaarInputCard
           handleAadhaarChange={handleAadhaarChange}
           handleOtpRequest={handleOtpRequest}
@@ -85,9 +78,8 @@ const AdharUI = () => {
         />
       )}
       {showAadhaarInfo && <AadhaarInfoCard aadhaarNumber={aadhaarNumber} />}
-      {showRefId && <RefIdComponent aadhaarNumber={aadhaarNumber}/>} {/* Render RefIdComponent */}
-      {showPrincipalVerification && <PrincipalVerificationComponent />} {/* Render PrincipalVerificationComponent */}
-    </div>
+      {showVerify && <Verification aadhaarNumber={aadhaarNumber}/>} {/* Render RefIdComponent */}
+       </div>
   );
 };
 
